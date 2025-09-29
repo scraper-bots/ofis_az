@@ -3,6 +3,7 @@ import asyncio
 from bs4 import BeautifulSoup
 import json
 import csv
+import pandas as pd
 from typing import Dict, List, Optional
 from urllib.parse import urljoin
 
@@ -227,6 +228,10 @@ class OfisScraperAsync:
                 full_data['phone'] = phone
                 print(f"    Phone: {phone}")
 
+            # Remove image fields
+            full_data.pop('images', None)
+            full_data.pop('image_url', None)
+
             return full_data
 
         return None
@@ -296,23 +301,30 @@ class OfisScraperAsync:
             print("No data to save")
             return
 
-        # Get all unique keys
-        all_keys = set()
-        for item in data:
-            all_keys.update(item.keys())
-
         # Remove complex fields for CSV
-        simple_keys = [k for k in all_keys if k not in ['images', 'ajax_data']]
+        clean_data = []
+        for item in data:
+            clean_item = {k: v for k, v in item.items() if k not in ['ajax_data']}
+            clean_data.append(clean_item)
 
-        with open(filename, 'w', newline='', encoding='utf-8') as f:
-            writer = csv.DictWriter(f, fieldnames=sorted(simple_keys))
-            writer.writeheader()
+        df = pd.DataFrame(clean_data)
+        df.to_csv(filename, index=False, encoding='utf-8')
+        print(f"Data saved to {filename}")
 
-            for item in data:
-                # Create simplified row
-                row = {k: v for k, v in item.items() if k in simple_keys}
-                writer.writerow(row)
+    def save_to_xlsx(self, data: List[Dict], filename: str = 'ofis_listings.xlsx'):
+        """Save scraped data to Excel file"""
+        if not data:
+            print("No data to save")
+            return
 
+        # Remove complex fields for Excel
+        clean_data = []
+        for item in data:
+            clean_item = {k: v for k, v in item.items() if k not in ['ajax_data']}
+            clean_data.append(clean_item)
+
+        df = pd.DataFrame(clean_data)
+        df.to_excel(filename, index=False, engine='openpyxl')
         print(f"Data saved to {filename}")
 
 
@@ -325,9 +337,10 @@ async def main():
 
     print(f"\nTotal listings scraped: {len(listings)}")
 
-    # Save to both JSON and CSV
+    # Save to JSON, CSV, and Excel
     scraper.save_to_json(listings)
     scraper.save_to_csv(listings)
+    scraper.save_to_xlsx(listings)
 
     print("\nScraping completed!")
 
