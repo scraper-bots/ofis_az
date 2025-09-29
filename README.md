@@ -24,14 +24,23 @@ pip install -r requirements.txt
 
 ## Usage
 
-### Basic Usage
+### Basic Usage (Synchronous)
 
-Run the scraper with default settings (5 pages):
+Run the synchronous scraper with default settings (5 pages):
 ```bash
 python scraper.py
 ```
 
-### Custom Usage
+### Async Usage (Faster - Recommended)
+
+Run the async scraper with concurrent processing:
+```bash
+python scraper_async.py
+```
+
+The async version processes multiple listings concurrently (default: 5 concurrent requests), making it significantly faster than the synchronous version.
+
+### Custom Usage (Synchronous)
 
 ```python
 from scraper import OfisScraper
@@ -48,26 +57,58 @@ scraper.save_to_json(listings, 'my_listings.json')
 scraper.save_to_csv(listings, 'my_listings.csv')
 ```
 
-### Scrape Single Listing
+### Custom Usage (Async)
 
 ```python
-from scraper import OfisScraper
+import asyncio
+from scraper_async import OfisScraperAsync
 
-scraper = OfisScraper()
+async def run():
+    # Create scraper with max 10 concurrent requests
+    scraper = OfisScraperAsync(max_concurrent=10)
 
-# Get details from specific URL
-details = scraper.get_listing_details('https://ofis.az/hezi-aslanov-kiraye-ev-211360.html')
+    # Scrape 10 pages
+    listings = await scraper.scrape_all_listings(max_pages=10)
 
-# Get phone number
-if 'ajax_data' in details:
-    ajax = details['ajax_data']
-    phone = scraper.get_phone_number(
-        ajax['id'],
-        ajax['t'],
-        ajax['h'],
-        ajax['rf']
-    )
-    print(f"Phone: {phone}")
+    # Save to JSON
+    scraper.save_to_json(listings, 'my_listings.json')
+
+    # Save to CSV
+    scraper.save_to_csv(listings, 'my_listings.csv')
+
+asyncio.run(run())
+```
+
+### Scrape Single Listing (Async)
+
+```python
+import asyncio
+import aiohttp
+from scraper_async import OfisScraperAsync
+
+async def scrape_single():
+    scraper = OfisScraperAsync()
+
+    async with aiohttp.ClientSession() as session:
+        # Get details from specific URL
+        details = await scraper.get_listing_details(
+            session,
+            'https://ofis.az/hezi-aslanov-kiraye-ev-211360.html'
+        )
+
+        # Get phone number
+        if details and 'ajax_data' in details:
+            ajax = details['ajax_data']
+            phone = await scraper.get_phone_number(
+                session,
+                ajax['id'],
+                ajax['t'],
+                ajax['h'],
+                ajax['rf']
+            )
+            print(f"Phone: {phone}")
+
+asyncio.run(scrape_single())
 ```
 
 ## Data Structure
@@ -102,7 +143,15 @@ if 'ajax_data' in details:
 
 ## Configuration
 
-### Adjust Delay Between Requests
+### Adjust Concurrency (Async Version)
+
+Control how many requests run simultaneously:
+
+```python
+scraper = OfisScraperAsync(max_concurrent=5)  # Max 5 concurrent requests
+```
+
+### Adjust Delay Between Requests (Sync Version)
 
 To be respectful to the server, adjust the delay parameter:
 
@@ -124,11 +173,16 @@ listings = scraper.scrape_all_listings(max_pages=20, delay=2.0)  # Scrape 20 pag
 
 ## Important Notes
 
-1. **Rate Limiting**: The scraper includes delays between requests to avoid overwhelming the server
-2. **Headers**: Proper headers are set to mimic a real browser
-3. **Error Handling**: Includes try-catch blocks for robust operation
-4. **Phone Numbers**: Fetched via separate AJAX calls using the listing's unique hash
-5. **Images**: Full-size image URLs are extracted from the slider
+1. **Performance**:
+   - **Async version** (recommended): Uses `asyncio` and `aiohttp` for concurrent requests, significantly faster
+   - **Sync version**: Traditional sequential processing with delays
+2. **Rate Limiting**:
+   - Async version uses semaphore to limit concurrent requests (default: 5)
+   - Sync version includes delays between requests
+3. **Headers**: Proper headers are set to mimic a real browser
+4. **Error Handling**: Includes try-catch blocks for robust operation
+5. **Phone Numbers**: Fetched via separate AJAX calls using the listing's unique hash
+6. **Images**: Full-size image URLs are extracted from the slider
 
 ## Example Output
 
