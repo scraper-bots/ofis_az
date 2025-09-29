@@ -333,7 +333,7 @@ async def main():
 
     # Scrape first 5 pages (start=0, 4, 8, 12, 16)
     # Listings within each page are processed concurrently
-    listings = await scraper.scrape_all_listings(max_pages=5)
+    listings = await scraper.scrape_all_listings(max_pages=100)
 
     print(f"\nTotal listings scraped: {len(listings)}")
 
