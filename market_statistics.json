@@ -1,0 +1,18 @@
+{
+  "total_listings": 2800,
+  "for_sale": 2206,
+  "for_rent": 480,
+  "avg_sale_price": 276543.8803263826,
+  "median_sale_price": 110000.0,
+  "min_sale_price": 7000.0,
+  "max_sale_price": 3800000.0,
+  "avg_price_per_sqm": 1428.3652038058724,
+  "median_price_per_sqm": 1250.0,
+  "top_property_type": "New Construction",
+  "top_property_count": "1106",
+  "top_district": "Ab\u015feron",
+  "top_district_count": "890",
+  "most_common_rooms": 2,
+  "avg_area": 122.10940293171255,
+  "median_area": 71.0
+}
